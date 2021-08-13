@@ -1,5 +1,6 @@
 """
-The function perform validation on the GS1-GTIN(14)
+The function perform validation on the GS1-GTIN(14) based on the check digit detailed in the link below:
+https://www.gs1.org/services/how-calculate-check-digit-manually
 
 """
 

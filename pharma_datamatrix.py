@@ -1,22 +1,31 @@
 """
 The function parse the GS1 Datamatrix barcode used for medicine packs.
-The barcodes output is in below format:
+The barcode scanners in the default setup outputs the scan is in below format:
 ]d201034531200000111719112510ABCD1234<GS>2110EW354EWER
 (01)03453120000011(17)191125(10)ABCD1234<GS>(21)10EW354EWER
 (01) = GTIN Identifier - Fixed 14 chars
 (17) = Expiry Date Identifer - Fixed 6 Chars
 (10) = Batch Identifier - Variable length. (upto 20 chars usually between 4 - 10 Chars)
 (21) = Serial Number - Variable length. (upto 20 chars - Usually between 12 - 20 Chars)
+(710 or 711 or 712 or 713 or 714) = Optional NHRN identifiers.
 The symbology identifier ]d2 and for the second FNC1, when used as a separator character is <GS> Group-Separator.
 
 """
-from gs1_gtin_validation import gtin_check
-from expiry_date_validation import expiry_date_check
+from .gs1_gtin_validation import gtin_check #The GTIN validation module
+from .expiry_date_validation import expiry_date_check #The Expiry validation module
 
-def pharma_datamatrix(barcode: str, validation: bool = False):
+def pharma_datamatrix(barcode: str, validation: bool = False) -> dict:
+    """
+    The function takes barcode string and return parsed objects in a `dict`. Optionally user can pass bool value to validate the barcode
+    Parameters:
+        barcode: string type. This is the barcode string with the <GS> seperators. 
+        validation: bool type. If 'True' the function performs validation on GTIN and Expiry Date.
+    Returns:
+        dict: Returns dictionary object with GTIN, EXPIRY, BATCH, SERIAL & NHRN as keys.
+    """
     result = dict()
     result['NHRN'] = None
-    if barcode[:3] == ']d2':
+    if barcode[:3] == ']d2': #Most barcode scanners prepend ']d2' identifier for the GS1 datamatrix. This senction removes the identifier.
         barcode = barcode[3:] 
     while barcode:
 
@@ -64,8 +73,9 @@ def pharma_datamatrix(barcode: str, validation: bool = False):
                 barcode = None
 
         else:
-            return f"Not a valid barcode"
+            return f"INVALID BARCODE"
 
+# If the validtion is set to "True", below section is processed. Perform validation checks on GTIN and Expriry Date
     if validation:
         if gtin_check(result['GTIN']) == False and expiry_date_check(result['EXPIRY']) == False:
             return f'INVALID GTIN & EXPIRY DATE'
@@ -77,15 +87,3 @@ def pharma_datamatrix(barcode: str, validation: bool = False):
             return result
     else:
         return result
-
-            
-
-
-
-
-
-result = pharma_datamatrix("01083860077038511724013110HN5R21587E4RT10P")
-
-print(result)
-
-
