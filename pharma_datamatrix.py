@@ -11,8 +11,9 @@ The barcode scanners in the default setup outputs the scan is in below format:
 The symbology identifier ]d2 and for the second FNC1, when used as a separator character is <GS> Group-Separator.
 
 """
-from .gs1_gtin_validation import gtin_check #The GTIN validation module
-from .expiry_date_validation import expiry_date_check #The Expiry validation module
+
+from gs1_gtin import gs1_gtin
+from ifa_ppn import ifa_ppn
 
 def pharma_datamatrix(barcode: str, validation: bool = False) -> dict:
     """
@@ -23,67 +24,19 @@ def pharma_datamatrix(barcode: str, validation: bool = False) -> dict:
     Returns:
         dict: Returns dictionary object with GTIN, EXPIRY, BATCH, SERIAL & NHRN as keys.
     """
-    result = dict()
-    result['NHRN'] = None
     if barcode[:3] == ']d2': #Most barcode scanners prepend ']d2' identifier for the GS1 datamatrix. This senction removes the identifier.
-        barcode = barcode[3:] 
-    while barcode:
+        barcode = barcode[3:]
+        result = gs1_gtin(barcode)
+    
+    elif barcode[:2] in ['01', '21', '17', '10', '71']:
+        result = gs1_gtin(barcode)
 
-        if barcode[:2] == '01':
-            result['GTIN'] = barcode[2:16]
-            barcode = barcode[16:]
-
-        elif barcode[:2] == '17':
-            result['EXPIRY'] = barcode[2:8]
-            barcode = barcode[8:]
-
-        elif barcode[:2] == '10':
-            if chr(29) in barcode:
-                for i, c in enumerate(barcode):
-                    if ord(c) == 29:
-                        result['BATCH'] = barcode[2:i]
-                        barcode = barcode[i+1:]
-                        break
-            else:
-                result['BATCH'] = barcode[2:]
-                barcode = None
-                
-        elif barcode[:2] == '21':
-            if chr(29) in barcode:
-                #print("In the serial GS check")
-                for i, c in enumerate(barcode):
-                    if ord(c) == 29:
-                        result['SERIAL'] = barcode[2:i]
-                        barcode = barcode[i+1:]
-                        break
-            else:
-                result['SERIAL'] = barcode[2:]
-                barcode = None
-
-
-        elif barcode[:3] in ['710', '711', '712', '713', '714']:
-            if chr(29) in barcode:
-                for i, c in enumerate(barcode):
-                    if ord(c) == 29:
-                        result['NHRN'] = barcode[2:i]
-                        barcode = barcode[i+1:]
-                        break
-            else:
-                result['NHRN'] = barcode[2:]
-                barcode = None
-
-        else:
-            return f"INVALID BARCODE"
-
-# If the validtion is set to "True", below section is processed. Perform validation checks on GTIN and Expriry Date
-    if validation:
-        if gtin_check(result['GTIN']) == False and expiry_date_check(result['EXPIRY']) == False:
-            return f'INVALID GTIN & EXPIRY DATE'
-        elif expiry_date_check(result['EXPIRY']) == False:
-            return f'INVALID EXPIRY DATE'
-        elif gtin_check(result['GTIN']) == False:
-            return f'INVALID GTIN'
-        else:
-            return result
+    elif barcode[:6] == '[)>'+chr(30)+'06':
+        barcode = barcode[7:] # Removes the leading ASCII seperator after the scheme identifier.
+        result = ifa_ppn(barcode)
+   
     else:
-        return result
+        result = f"01 INVALID BARCODE"
+        
+    return result
+
