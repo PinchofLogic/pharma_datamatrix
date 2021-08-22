@@ -1,6 +1,5 @@
 # pharma_datamatrix package
-The package allow users to pass the string produced by the 2D barcode scanners and parse the string into GTIN, EXPIRY, SERIAL, BATCH and NHRN.
-Optionally, user can pass validation=True, to validate the GTIN and Expiry date.
+The package allow users to pass the string produced by the 2D barcode scanners and parse the string into GTIN, PPN, EXPIRY, SERIAL, BATCH and NHRN.
 
 # Files
 pharma_datamatrix.py: Primary function that checks the barcode format and inturn calls relevant parsing logic function.
