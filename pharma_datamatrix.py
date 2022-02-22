@@ -3,8 +3,8 @@ This function contains code to identify the barcode type: GS1-GTIN or IFA-PPN.
 
 """
 
-from gs1_gtin import gs1_gtin
-from ifa_ppn import ifa_ppn
+from .gs1_gtin import gs1_gtin
+from .ifa_ppn import ifa_ppn
 
 def pharma_datamatrix(barcode: str) -> dict:
     """
@@ -17,9 +17,9 @@ def pharma_datamatrix(barcode: str) -> dict:
         dict: Returns dictionary object with SCHEME, PPN, GTIN, EXPIRY, BATCH, SERIAL & NHRN as keys for valid requests 
         or relevant error strings.
     """
-    if barcode[:3] == ']d2': #Most barcode scanners prepend ']d2' identifier for the GS1 datamatrix. This senction removes the identifier.
-        barcode = barcode[3:]
-        result = gs1_gtin(barcode)
+    if barcode[:3] == "]d2": # Most barcode scanners prepend ']d2' identifier for the GS1 datamatrix. This section removes the identifier.
+       barcode = barcode[3:]
+       result = gs1_gtin(barcode)
     
     elif barcode[:2] in ['01', '21', '17', '10', '71']:
         result = gs1_gtin(barcode)
@@ -29,6 +29,6 @@ def pharma_datamatrix(barcode: str) -> dict:
         result = ifa_ppn(barcode)
    
     else:
-        result = {'ERROR': 'INVALID BARCODE'}
+        result = {'ERROR': 'INVALID FORMAT', 'BARCODE': barcode}
         
     return result

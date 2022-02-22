@@ -20,10 +20,10 @@ S	        Serial number	12345ABCDEF98765 (between 12-20 chars)
 """
 
 
-from expiry_date_validation import expiry_date_check #The Expiry validation module
-from ifa_ppn_validation import ppn_check
+from .expiry_date_validation import expiry_date_check #The Expiry validation module
+from .ifa_ppn_validation import ppn_check
 
-result = {'SCHEME': 'PPN'}
+result = {'SCHEME': 'IFA'}
 
 def ifa_ppn(barcode: str) -> dict: 
 
@@ -45,29 +45,23 @@ def ifa_ppn(barcode: str) -> dict:
 
         elif barcode[:2] == '1T':
             if chr(29) in barcode:
-                for i, c in enumerate(barcode):
-                    if ord(c) == 29:
-                        result['BATCH'] = barcode[2:i]
-                        barcode = barcode[i+1:]
-                        break
+                index = barcode.index(chr(29))
+                result['BATCH'] = barcode[2:index]
+                barcode = barcode[index+1:]
             else:
-                for i, c in enumerate(barcode):
-                    if ord(c) == 30:
-                        result['BATCH'] = barcode[2:i]
-                        barcode = None
+                index = barcode.index(chr(30))
+                result['BATCH'] = barcode[2:index]
+                barcode = None
                 
         elif barcode[:1] == 'S':
             if chr(29) in barcode:
-                for i, c in enumerate(barcode):
-                    if ord(c) == 29:
-                        result['SERIAL'] = barcode[1:i]
-                        barcode = barcode[i+1:]
-                        break
+                index = barcode.index(chr(29))
+                result['SERIAL'] = barcode[1:index]
+                barcode = barcode[index+1:]
             else:
-                for i, c in enumerate(barcode):
-                    if ord(c) == 30:
-                        result['SERIAL'] = barcode[1:i]
-                        barcode = None
+                index = barcode.index(chr(30))
+                result['SERIAL'] = barcode[1:index]
+                barcode = None
         
         elif barcode[:2] == '8P':
             result['GTIN'] = barcode[2:16]
@@ -77,16 +71,16 @@ def ifa_ppn(barcode: str) -> dict:
                 barcode = None
 
         else:
-            return {'ERROR': 'INVALID BARCODE'}
+            return {'ERROR': 'INVALID BARCODE', 'BARCODE': result}
 
     if 'PPN' and 'BATCH' and 'EXPIRY' and 'SERIAL' in result.keys():
         if ppn_check(result['PPN']) == False and expiry_date_check(result['EXPIRY']) == False:
-            return {'ERROR': 'INVALID PPN & EXPIRY DATE'}
+            return {'ERROR': 'INVALID PPN & EXPIRY DATE', 'BARCODE': result}
         elif expiry_date_check(result['EXPIRY']) == False:
-            return {'ERROR': 'INVALID EXPIRY DATE'}
+            return {'ERROR': 'INVALID EXPIRY DATE', 'BARCODE': result}
         elif ppn_check(result['PPN']) == False:
-            return {'ERROR': 'INVALID PPN'}
+            return {'ERROR': 'INVALID PPN', 'BARCODE': result}
         else:
             return result
     else:
-        return {'ERROR': 'INVALID BARCODE'}
+        return {'ERROR': 'INCOMPLETE DATA', 'BARCODE': result}

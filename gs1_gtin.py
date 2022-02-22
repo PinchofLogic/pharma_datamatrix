@@ -13,10 +13,10 @@ The symbology identifier ]d2 and for the second FNC1, when used as a separator c
 """
 
 
-from gs1_gtin_validation import gtin_check #The GTIN validation module
-from expiry_date_validation import expiry_date_check #The Expiry validation module
+from .gs1_gtin_validation import gtin_check #The GTIN validation module
+from .expiry_date_validation import expiry_date_check #The Expiry validation module
 
-result = {'SCHEME': 'GTIN'}
+result = {'SCHEME': 'GS1'}
 
 
 def gs1_gtin(barcode: str) -> dict: 
@@ -24,7 +24,6 @@ def gs1_gtin(barcode: str) -> dict:
     if chr(29) in barcode:
 
         while barcode:
-
             if barcode[:2] == '01':
                 result['GTIN'] = barcode[2:16]
                 if len(barcode) > 16:
@@ -41,23 +40,18 @@ def gs1_gtin(barcode: str) -> dict:
 
             elif barcode[:2] == '10':
                 if chr(29) in barcode:
-                    for i, c in enumerate(barcode):
-                        if ord(c) == 29:
-                            result['BATCH'] = barcode[2:i]
-                            barcode = barcode[i+1:]
-                            break
+                    index = barcode.index(chr(29))
+                    result['BATCH'] = barcode[2:index]
+                    barcode = barcode[index+1:]
                 else:
                     result['BATCH'] = barcode[2:]
                     barcode = None
                     
             elif barcode[:2] == '21':
                 if chr(29) in barcode:
-                    #print("In the serial GS check")
-                    for i, c in enumerate(barcode):
-                        if ord(c) == 29:
-                            result['SERIAL'] = barcode[2:i]
-                            barcode = barcode[i+1:]
-                            break
+                    index = barcode.index(chr(29))
+                    result['SERIAL'] = barcode[2:index]
+                    barcode = barcode[index+1:]
                 else:
                     result['SERIAL'] = barcode[2:]
                     barcode = None
@@ -65,29 +59,27 @@ def gs1_gtin(barcode: str) -> dict:
 
             elif barcode[:3] in ['710', '711', '712', '713', '714']:
                 if chr(29) in barcode:
-                    for i, c in enumerate(barcode):
-                        if ord(c) == 29:
-                            result['NHRN'] = barcode[3:i]
-                            barcode = barcode[i+1:]
-                            break
+                    index = barcode.index(chr(29))
+                    result['NHRN'] = barcode[3:index]
+                    barcode = barcode[index+1:]
                 else:
                     result['NHRN'] = barcode[3:]
                     barcode = None
             else:
-                return {'ERROR': 'INVALID BARCODE'}
+                return {'ERROR': 'INVALID BARCODE', 'BARCODE': result}
     else:
-        return {'ERROR': 'INVALID BARCODE'}
+        return {'ERROR': 'No GS Separator', 'BARCODE': result}
 
     if 'GTIN' and 'BATCH' and 'EXPIRY' and 'SERIAL' in result.keys():
         if gtin_check(result['GTIN']) == False and expiry_date_check(result['EXPIRY']) == False:
-            return {'ERROR': 'INVALID GTIN & EXPIRY DATE'}
+            return {'ERROR': 'INVALID GTIN & EXPIRY DATE', 'BARCODE': result}
         elif expiry_date_check(result['EXPIRY']) == False:
-            return {'ERROR': 'INVALID EXPIRY DATE'}
+            return {'ERROR': 'INVALID EXPIRY DATE', 'BARCODE': result}
         elif gtin_check(result['GTIN']) == False:
-            return {'ERROR': 'INVALID GTIN'}
+            return {'ERROR': 'INVALID GTIN', 'BARCODE': result}
         else:
             return result
     else:
-        return {'ERROR': 'INVALID BARCODE'}
+        return {'ERROR': 'INCOMPLETE DATA', 'BARCODE': result}
     
 

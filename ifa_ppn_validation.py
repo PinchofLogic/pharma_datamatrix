@@ -13,7 +13,6 @@ def ppn_check(ppn: str) -> bool:
     for i in range(10):
         digit_sum += (ord(ppn[i]) * weight)
         weight += 1
-    print(digit_sum)
     check_digit = digit_sum % 97
     return check_digit == int(ppn[-2:]) #PPN last two chars are converted to int to remove any leading zero.
 
